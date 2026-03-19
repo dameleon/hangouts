@@ -15,7 +15,7 @@ claude:
 	$(RUN) claude --dangerously-skip-permissions $(ARGS)
 
 codex:
-	$(RUN) codex --full-auto $(ARGS)
+	$(RUN) codex --yolo $(ARGS)
 
 gemini:
 	$(RUN) gemini --yolo $(ARGS)
@@ -24,7 +24,7 @@ gh:
 	$(RUN) gh $(ARGS)
 
 copilot:
-	$(RUN) copilot $(ARGS)
+	$(RUN) copilot --yolo $(ARGS)
 
 difit:
 	$(RUN) difit $(ARGS)

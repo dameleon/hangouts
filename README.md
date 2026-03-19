@@ -12,13 +12,16 @@ cp .env.example .env
 # 2. イメージビルド
 make build
 
-# 3. エージェント起動
+# 3. エージェント起動（カレントディレクトリが作業対象）
 make claude
 make codex
 make gemini
 make gh
 make copilot
 make difit
+
+# 別ディレクトリを作業対象にする場合
+make claude WORKSPACE=/path/to/your/project
 ```
 
 ## Included CLIs
@@ -49,6 +52,15 @@ make difit
 
 各agentターゲットは `$(ARGS)` で追加引数を渡せる: `make claude ARGS="-p 'do something'"`
 
+### WORKSPACE
+
+デフォルトではカレントディレクトリ (`$PWD`) がコンテナ内の `/workspace` にマウントされる。
+別のディレクトリを作業対象にしたい場合は `WORKSPACE` 変数を指定する:
+
+```bash
+make claude WORKSPACE=/path/to/your/project
+```
+
 ## YOLO Mode
 
 各agentはデフォルトで権限確認をスキップするフラグ付きで起動する:
@@ -56,9 +68,9 @@ make difit
 | Agent | フラグ |
 |---|---|
 | Claude | `--dangerously-skip-permissions` |
-| Codex | `--full-auto` |
+| Codex | `--yolo` |
 | Gemini | `--yolo` |
-| Copilot | フラグ未サポート（据え置き） |
+| Copilot | `--yolo` |
 
 ## Config Sync
 
@@ -73,6 +85,7 @@ make difit
 | Path | Mode |
 |---|---|
 | `~/.claude` | rw |
+| `~/.claude.json` | rw |
 | `~/.codex` | rw |
 | `~/.gemini` | rw |
 | `~/.config/gh` | rw |

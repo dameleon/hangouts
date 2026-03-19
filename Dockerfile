@@ -28,10 +28,15 @@ RUN npm install -g \
     @github/copilot \
     difit
 
+# Non-root user (required for claude --dangerously-skip-permissions)
+RUN useradd -m -s /bin/bash agent
+RUN mkdir -p /home/agent/.config && chown -R agent:agent /home/agent
+
 # Scripts
 COPY scripts/ /usr/local/share/hangouts/scripts/
 RUN chmod +x /usr/local/share/hangouts/scripts/*.sh
 
+USER agent
 WORKDIR /workspace
 
 ENTRYPOINT ["/usr/local/share/hangouts/scripts/entrypoint.sh"]
