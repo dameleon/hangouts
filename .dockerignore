@@ -1,0 +1,9 @@
+.git
+.env
+.claude
+.DS_Store
+tmp/
+*.log
+TASKS.md
+LICENSE
+README.md
