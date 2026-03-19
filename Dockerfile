@@ -24,9 +24,10 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
-# Claude Code via native installer (recommended over npm)
-RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && cp /root/.local/bin/claude /usr/local/bin/claude
+# Scripts
+ADD scripts/entrypoint.sh /usr/local/share/hangouts/scripts/entrypoint.sh
+# Git hooks (pre-push: block direct push to protected branches)
+ADD scripts/hooks/pre-push /usr/local/share/hangouts/hooks/pre-push
 
 # npm-based CLIs
 RUN npm install -g \
@@ -37,20 +38,14 @@ RUN npm install -g \
 
 # Non-root user (required for claude --dangerously-skip-permissions)
 RUN useradd -m -s /bin/bash agent
-RUN mkdir -p /home/agent/.config /home/agent/.local/share/keyrings \
-    && chown -R agent:agent /home/agent
-
-# Scripts
-COPY scripts/ /usr/local/share/hangouts/scripts/
-RUN chmod +x /usr/local/share/hangouts/scripts/*.sh
-
-# Git hooks (pre-push: block direct push to protected branches)
-COPY scripts/hooks/ /usr/local/share/hangouts/hooks/
-RUN chmod +x /usr/local/share/hangouts/hooks/*
-
-ENV TERM=xterm-256color
 
 USER agent
+ENV PATH=$PATH:/home/agent/.local/bin
+ENV TERM=xterm-256color
+RUN mkdir -p /home/agent/.config /home/agent/.local/share/keyrings
+
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
 WORKDIR /workspace
 
 ENTRYPOINT ["/usr/local/share/hangouts/scripts/entrypoint.sh"]
