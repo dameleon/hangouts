@@ -9,8 +9,8 @@ if command -v gh &>/dev/null && [ -n "${GITHUB_TOKEN:-}" ]; then
     gh auth setup-git 2>/dev/null || true
     # Transparently rewrite SSH URLs to HTTPS so PAT auth works
     # without modifying the workspace's .git/config (host-shared)
-    git config --file "$GIT_CONFIG_GLOBAL" url."https://github.com/".insteadOf "ssh://git@github.com/"
     git config --file "$GIT_CONFIG_GLOBAL" url."https://github.com/".insteadOf "git@github.com:"
+    git config --file "$GIT_CONFIG_GLOBAL" --add url."https://github.com/".insteadOf "ssh://git@github.com/"
 fi
 
 # Set global git hooks path (pre-push blocks direct push to protected branches)
