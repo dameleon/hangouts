@@ -26,3 +26,11 @@
 - [x] `TASKS.md` 作成
 - [x] `README.md` 更新
 - [ ] ビルド＆動作確認
+
+## Phase 5: YOLO mode + Git認証改善
+- [x] Makefileに各agentのYOLOフラグ追加（claude, codex, gemini）
+- [x] SSH直接マウントを廃止、PAT（GITHUB_TOKEN）+ `gh auth setup-git` 方式に変更
+- [x] entrypoint.shに `gh auth setup-git` 追加
+- [x] README.md更新（YOLO mode、Git認証説明）
+- [ ] 動作確認
+- [ ] コンテナ専用SSH鍵の生成（将来検討）

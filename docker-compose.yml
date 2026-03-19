@@ -20,8 +20,7 @@ services:
       - ${HOME}/.config/gh:/root/.config/gh
       - ${HOME}/.config/github-copilot:/root/.config/github-copilot
 
-      # SSH & git (read-only)
-      - ${HOME}/.ssh:/root/.ssh:ro
+      # git config (read-only)
       - ${HOME}/.gitconfig:/root/.gitconfig:ro
 
       # Docker socket

@@ -12,13 +12,13 @@ shell:
 	$(RUN) bash
 
 claude:
-	$(RUN) claude
+	$(RUN) claude --dangerously-skip-permissions $(ARGS)
 
 codex:
-	$(RUN) codex
+	$(RUN) codex --full-auto $(ARGS)
 
 gemini:
-	$(RUN) gemini
+	$(RUN) gemini --yolo $(ARGS)
 
 gh:
 	$(RUN) gh $(ARGS)
