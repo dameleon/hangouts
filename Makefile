@@ -1,9 +1,9 @@
 IMAGE_NAME := hangouts
 WORKSPACE  ?= $(PWD)
 DC         := docker compose
-RUN        := $(DC) run --rm hangouts
+RUN        := $(DC) run --rm -e HOST_WORKSPACE_PATH=$(WORKSPACE) hangouts
 
-.PHONY: build shell clean claude codex gemini gh difit copilot run
+.PHONY: build shell clean claude codex gemini gh difit copilot run prepare
 
 build:
 	$(DC) build
@@ -11,7 +11,10 @@ build:
 shell:
 	$(RUN) bash
 
-claude:
+prepare:
+	bash scripts/prepare-claude.sh
+
+claude: prepare
 	$(RUN) claude --dangerously-skip-permissions $(ARGS)
 
 codex:

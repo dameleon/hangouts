@@ -9,13 +9,33 @@ services:
       - .env
     environment:
       - GITHUB_TOKEN
+      - HOST_WORKSPACE_PATH=${HOST_WORKSPACE_PATH:-}
+      - HOST_HOME=${HOME}
     volumes:
       # Workspace
       - ${WORKSPACE:-./}:/workspace
 
-      # Agent configs (read-write)
-      - ${HOME}/.claude:/home/agent/.claude
-      - ${HOME}/.claude.json:/home/agent/.claude.json
+      # ── Claude Code: 認証・設定 (read-only) ──
+      - ${HOME}/.claude/.credentials.json:/home/agent/.claude/.credentials.json:ro
+      - ${HOME}/.claude/settings.json:/home/agent/.claude/settings.json:ro
+      - ./.container/claude.json:/home/agent/.claude.json:ro
+
+      # ── Claude Code: 共有状態 (read-write) ──
+      - ${HOME}/.claude/projects:/home/agent/.claude/projects
+      - ${HOME}/.claude/history.jsonl:/home/agent/.claude/history.jsonl
+      - ${HOME}/.claude/sessions:/home/agent/.claude/sessions
+      - ${HOME}/.claude/tasks:/home/agent/.claude/tasks
+      - ${HOME}/.claude/plans:/home/agent/.claude/plans
+      - ${HOME}/.claude/todos:/home/agent/.claude/todos
+
+      # ── Claude Code: スキル (staging → entrypoint でコピー) ──
+      - ${HOME}/.claude/skills:/home/agent/.claude/skills-host:ro
+      - ${HOME}/.agents:/home/agent/.agents:ro
+
+      # ── Claude Code: プラグイン (read-write, HOST_HOME symlink でパス解決) ──
+      - ${HOME}/.claude/plugins:/home/agent/.claude/plugins
+
+      # ── 他のエージェント (変更なし) ──
       - ${HOME}/.codex:/home/agent/.codex
       - ${HOME}/.gemini:/home/agent/.gemini
       - ${HOME}/.config/gh:/home/agent/.config/gh
@@ -24,10 +44,8 @@ services:
       # git config (read-only)
       - ${HOME}/.gitconfig:/home/agent/.gitconfig:ro
 
-      # Keyring (credential storage for copilot etc.)
+      # Keyring / Docker socket
       - keyring:/home/agent/.local/share/keyrings
-
-      # Docker socket
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
