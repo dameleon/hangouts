@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Host ~/.gitconfig is mounted read-only — create a writable copy for container use
+export GIT_CONFIG_GLOBAL=/home/agent/.gitconfig-local
+cp /home/agent/.gitconfig "$GIT_CONFIG_GLOBAL" 2>/dev/null || touch "$GIT_CONFIG_GLOBAL"
+
+# Set global git hooks path (pre-push blocks direct push to protected branches)
+git config --file "$GIT_CONFIG_GLOBAL" core.hooksPath /usr/local/share/hangouts/hooks
+
 # Configure git to use GitHub CLI for HTTPS authentication
-# Note: ~/.gitconfig is mounted read-only, so write to GIT_CONFIG_GLOBAL instead
+# Host .git/config keeps SSH URLs for host-side SSH key auth;
+# insteadOf transparently rewrites them to HTTPS inside the container
 if command -v gh &>/dev/null && [ -n "${GITHUB_TOKEN:-}" ]; then
-    export GIT_CONFIG_GLOBAL=/home/agent/.gitconfig-local
-    cp /home/agent/.gitconfig "$GIT_CONFIG_GLOBAL" 2>/dev/null || true
     gh auth setup-git 2>/dev/null || true
-    # Transparently rewrite SSH URLs to HTTPS so PAT auth works
-    # without modifying the workspace's .git/config (host-shared)
     git config --file "$GIT_CONFIG_GLOBAL" url."https://github.com/".insteadOf "git@github.com:"
     git config --file "$GIT_CONFIG_GLOBAL" --add url."https://github.com/".insteadOf "ssh://git@github.com/"
 fi
-
-# Set global git hooks path (pre-push blocks direct push to protected branches)
-git config --file "${GIT_CONFIG_GLOBAL:-/home/agent/.gitconfig-local}" core.hooksPath /usr/local/share/hangouts/hooks
 
 # Start D-Bus + gnome-keyring only for commands that need credential storage (e.g. copilot)
 # dbus-run-session breaks TTY signal handling, so we only use it when necessary
