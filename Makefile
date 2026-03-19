@@ -24,7 +24,7 @@ gh:
 	$(RUN) gh $(ARGS)
 
 copilot:
-	$(RUN) copilot --yolo $(ARGS)
+	$(DC) run --rm -e GITHUB_TOKEN= hangouts copilot --yolo $(ARGS)
 
 difit:
 	$(RUN) difit $(ARGS)

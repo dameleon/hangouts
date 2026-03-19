@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     openssh-client \
     gnupg \
+    dbus \
+    gnome-keyring \
+    libsecret-1-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # gh CLI via official apt repository
@@ -30,7 +33,8 @@ RUN npm install -g \
 
 # Non-root user (required for claude --dangerously-skip-permissions)
 RUN useradd -m -s /bin/bash agent
-RUN mkdir -p /home/agent/.config && chown -R agent:agent /home/agent
+RUN mkdir -p /home/agent/.config /home/agent/.local/share/keyrings \
+    && chown -R agent:agent /home/agent
 
 # Scripts
 COPY scripts/ /usr/local/share/hangouts/scripts/
