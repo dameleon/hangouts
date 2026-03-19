@@ -2,6 +2,7 @@ FROM node:22-bookworm-slim
 
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     git \
     curl \
     jq \
@@ -25,7 +26,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Claude Code via native installer (recommended over npm)
 RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && ln -s /root/.local/bin/claude /usr/local/bin/claude
+    && cp /root/.local/bin/claude /usr/local/bin/claude
 
 # npm-based CLIs
 RUN npm install -g \
@@ -46,6 +47,8 @@ RUN chmod +x /usr/local/share/hangouts/scripts/*.sh
 # Git hooks (pre-push: block direct push to protected branches)
 COPY scripts/hooks/ /usr/local/share/hangouts/hooks/
 RUN chmod +x /usr/local/share/hangouts/hooks/*
+
+ENV TERM=xterm-256color
 
 USER agent
 WORKDIR /workspace
