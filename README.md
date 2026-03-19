@@ -28,7 +28,7 @@ make claude WORKSPACE=/path/to/your/project
 
 | CLI | Package | Description |
 |---|---|---|
-| `claude` | `@anthropic-ai/claude-code` | Claude Code |
+| `claude` | native installer | Claude Code |
 | `codex` | `@openai/codex` | OpenAI Codex CLI |
 | `gemini` | `@google/gemini-cli` | Google Gemini CLI |
 | `copilot` | `@github/copilot` | GitHub Copilot CLI |

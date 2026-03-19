@@ -23,9 +23,12 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
+# Claude Code via native installer (recommended over npm)
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && ln -s /root/.local/bin/claude /usr/local/bin/claude
+
 # npm-based CLIs
 RUN npm install -g \
-    @anthropic-ai/claude-code \
     @openai/codex \
     @google/gemini-cli \
     @github/copilot \
