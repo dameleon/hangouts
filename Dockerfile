@@ -40,6 +40,10 @@ RUN mkdir -p /home/agent/.config /home/agent/.local/share/keyrings \
 COPY scripts/ /usr/local/share/hangouts/scripts/
 RUN chmod +x /usr/local/share/hangouts/scripts/*.sh
 
+# Git hooks (pre-push: block direct push to protected branches)
+COPY scripts/hooks/ /usr/local/share/hangouts/hooks/
+RUN chmod +x /usr/local/share/hangouts/hooks/*
+
 USER agent
 WORKDIR /workspace
 

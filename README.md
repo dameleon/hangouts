@@ -101,6 +101,20 @@ make claude WORKSPACE=/path/to/your/project
 - SSH鍵のマウントやagent forwarding不要
 - `.env` に `GITHUB_TOKEN` を設定するだけで動作
 
+## Push Protection
+
+default branch（main/master）への直 push を二重に防御:
+
+1. **GitHub Branch Protection Ruleset（サーバー側・主防御）** — admin も「Allow for pull requests only」に設定。API 経由の push もブロック
+2. **pre-push フック（クライアント側・補助）** — main, master, develop, staging への push をローカルで拒否し、親切なエラーメッセージを表示
+
+feature branch への push は許可される。変更を反映するには PR を作成すること。
+
+```bash
+git push origin main        # → 拒否
+git push origin feature/x   # → 許可
+```
+
 ## Architecture
 
 ```

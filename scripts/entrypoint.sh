@@ -19,4 +19,7 @@ if command -v gh &>/dev/null && [ -n "${GITHUB_TOKEN:-}" ]; then
     gh auth setup-git 2>/dev/null || true
 fi
 
+# Set global git hooks path (pre-push blocks direct push to protected branches)
+git config --file "${GIT_CONFIG_GLOBAL:-/home/agent/.gitconfig-local}" core.hooksPath /usr/local/share/hangouts/hooks
+
 exec "$@"
