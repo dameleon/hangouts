@@ -4,14 +4,14 @@ services:
     image: hangouts:latest
     stdin_open: true
     tty: true
-    working_dir: ${HOST_WORKSPACE_PATH:-/workspace}
+    working_dir: ${WORKSPACE:-/workspace}
     env_file:
       - .env
     environment:
       - GITHUB_TOKEN
     volumes:
       # Workspace（host と同じ絶対パスで mount）
-      - ${WORKSPACE:-./}:${HOST_WORKSPACE_PATH:-/workspace}
+      - ${WORKSPACE:-./}:${WORKSPACE:-/workspace}
       # Agent config（.container/ 配下を直接 mount）
       - ./.container/.claude:/home/agent/.claude
       - ./.container/.claude.json:/home/agent/.claude.json

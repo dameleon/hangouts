@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     curl \
-    jq \
     less \
     openssh-client \
     gnupg \
@@ -26,10 +25,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && rm -rf /var/lib/apt/lists/*
 
 # Scripts
-ADD scripts/entrypoint.sh /usr/local/share/hangouts/scripts/entrypoint.sh
-ADD scripts/entrypoint-agent.sh /usr/local/share/hangouts/scripts/entrypoint-agent.sh
-# Git hooks (pre-push: block direct push to protected branches)
-ADD scripts/hooks/pre-push /usr/local/share/hangouts/hooks/pre-push
+ADD scripts/entrypoint.sh /opt/hangouts/entrypoint.sh
+ADD scripts/hooks/pre-push /opt/hangouts/hooks/pre-push
 
 # npm-based CLIs
 RUN npm install -g \
@@ -50,10 +47,7 @@ RUN mkdir -p /home/agent/.config \
 
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# entrypoint は root で開始（gosu で agent に降格）
 USER root
 
-WORKDIR /workspace
-
-ENTRYPOINT ["/usr/local/share/hangouts/scripts/entrypoint.sh"]
+ENTRYPOINT ["/opt/hangouts/entrypoint.sh"]
 CMD ["bash"]

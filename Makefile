@@ -1,7 +1,7 @@
-IMAGE_NAME := hangouts
 WORKSPACE  ?= $(PWD)
 DC         := docker compose
-RUN        := $(DC) run --rm -e HOST_WORKSPACE_PATH=$(WORKSPACE) hangouts
+RUN_BASE   := WORKSPACE=$(WORKSPACE) $(DC) run --rm
+RUN        := $(RUN_BASE) hangouts
 
 .PHONY: build shell clean claude codex gemini gh difit copilot run
 
@@ -24,7 +24,7 @@ gh:
 	$(RUN) gh $(ARGS)
 
 copilot:
-	$(DC) run --rm -e GITHUB_TOKEN= hangouts copilot --yolo $(ARGS)
+	$(RUN_BASE) -e GITHUB_TOKEN= hangouts copilot --yolo $(ARGS)
 
 difit:
 	$(RUN) difit $(ARGS)
