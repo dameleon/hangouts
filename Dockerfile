@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     curl \
+    wget \
     less \
     openssh-client \
     gnupg \
@@ -12,6 +13,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnome-keyring \
     libsecret-1-0 \
     gosu \
+    # Dev tools for LLM agents \
+    jq \
+    bubblewrap \
+    ripgrep \
+    fd-find \
+    tree \
+    unzip \
+    zip \
+    make \
+    patch \
+    file \
+    procps \
+    iproute2 \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # gh CLI via official apt repository
