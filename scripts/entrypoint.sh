@@ -3,8 +3,19 @@ set -euo pipefail
 
 # Drop privileges to agent user if running as root
 if [ "$(id -u)" = "0" ]; then
+    # Fix TTY ownership so the agent user can read/write the terminal
+    if [ -t 0 ]; then
+        chown agent:agent "$(tty)" 2>/dev/null || true
+    fi
     exec gosu agent "$0" "$@"
 fi
+
+# Ensure TERM is set to a value with terminfo available in the container
+case "${TERM:-}" in
+    xterm-ghostty|*-ghostty)
+        export TERM=xterm-256color
+        ;;
+esac
 
 export GIT_CONFIG_GLOBAL=/home/agent/.gitconfig-local
 touch "$GIT_CONFIG_GLOBAL"
