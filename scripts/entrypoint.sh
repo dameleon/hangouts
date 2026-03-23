@@ -7,7 +7,7 @@ set -euo pipefail
 if [ -n "${HOST_HOME:-}" ]; then
     host_claude="${HOST_HOME}/.claude"
     if [ ! -e "$host_claude" ]; then
-        mkdir -p "$(dirname "$HOST_HOME")"
+        mkdir -p "$HOST_HOME"
         ln -sfn /home/agent/.claude "$host_claude"
     fi
 fi
