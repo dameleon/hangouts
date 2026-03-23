@@ -40,7 +40,6 @@ make claude WORKSPACE=/path/to/your/project
 | Target | Description |
 |---|---|
 | `make build` | Dockerイメージをビルド |
-| `make prepare` | Claude Code のマウントソース準備（`make claude` で自動実行） |
 | `make claude` | Claude Code を起動（YOLO mode） |
 | `make codex` | Codex CLI を起動（full-auto mode） |
 | `make gemini` | Gemini CLI を起動（YOLO mode） |
@@ -62,6 +61,8 @@ make claude WORKSPACE=/path/to/your/project
 make claude WORKSPACE=/path/to/your/project
 ```
 
+> **注意**: `WORKSPACE` は絶対パスで指定すること。`docker compose` を直接使う場合も同様。
+
 ## YOLO Mode
 
 各agentはデフォルトで権限確認をスキップするフラグ付きで起動する:
@@ -75,53 +76,37 @@ make claude WORKSPACE=/path/to/your/project
 
 ## Claude Code 同期方式
 
-ホストの `~/.claude` を丸ごとマウントすると auto-update 競合やバージョン不整合でクラッシュするため、
-**個別ファイル/ディレクトリの bind mount** で共有すべきものだけを明示的にマウントする。
+ホストの `~/.claude` を直接マウントすると auto-update 競合やバージョン不整合でクラッシュするため、
+`.container/` ディレクトリをステージング領域として使い、ホスト `~/.claude` とは分離する。
 
-### マウント対象（Claude Code）
+### 仕組み
 
-| パス | マウント先 | Mode | 用途 |
-|---|---|---|---|
-| `~/.claude/.credentials.json` | `/home/agent/.claude/.credentials.json` | ro | OAuth 認証 |
-| `~/.claude/settings.json` | `/home/agent/.claude/settings.json` | ro | 設定 |
-| `~/.claude/history.jsonl` | `/home/agent/.claude/history.jsonl` | rw | 会話履歴 |
-| `~/.claude/projects/` | `/home/agent/.claude/projects` | rw | memory, CLAUDE.md, 会話 |
-| `~/.claude/sessions/` | `/home/agent/.claude/sessions` | rw | セッション追跡 |
-| `~/.claude/tasks/` | `/home/agent/.claude/tasks` | rw | タスクデータ |
-| `~/.claude/plans/` | `/home/agent/.claude/plans` | rw | プラン |
-| `~/.claude/todos/` | `/home/agent/.claude/todos` | rw | Todo 状態 |
-| `~/.claude/plugins/` | `/home/agent/.claude/plugins` | rw | プラグイン |
-| `~/.claude/skills/` | `/home/agent/.claude/skills-host` | ro | スキル定義（staging） |
-| `~/.agents/` | `/home/agent/.agents` | ro | skills の symlink 解決先 |
-| `.container/claude.json` | `/home/agent/.claude.json` | ro | autoUpdates=false |
+1. `.container/.claude/` にエージェント設定を配置（ホスト `~/.claude` からコピーまたは手動構成）
+2. `docker-compose.yml` で `.container/.claude` → `/home/agent/.claude` に丸ごと bind mount
+3. コンテナ内の変更は `.container/.claude/` に反映されるが、ホスト `~/.claude` には影響しない
 
-### マウントしないもの（コンテナ内 ephemeral）
+### マウント一覧（Claude Code）
 
-`debug/`, `cache/`, `telemetry/`, `file-history/`, `shell-snapshots/`, `backups/`, `statsig/`,
-`.update.lock` 等 — コンテナ終了時に `--rm` で自動消滅。ホスト側に漏れない。
+| ホスト側 | コンテナ側 | 用途 |
+|---|---|---|
+| `.container/.claude/` | `/home/agent/.claude` | Claude Code 設定・データ全般 |
+| `.container/.claude.json` | `/home/agent/.claude.json` | トップレベル設定（autoUpdates=false 等） |
 
-### Skills の扱い
+### 注意事項
 
-`~/.claude/skills/` は `skills-host:ro` としてマウントし、entrypoint でコンテナ内にコピーする。
-ホスト絶対パスの symlink（コンテナ内で解決不可）は自動除去される。
-相対 symlink は `~/.agents` マウントにより正常に解決される。
-
-### Plugins の扱い
-
-`installed_plugins.json` 内の `installPath` がホスト絶対パスのため、
-entrypoint で `$HOST_HOME/.claude → /home/agent/.claude` symlink を作成してパスを解決する。
-この symlink はコンテナ終了で消滅し、ホスト側に影響しない。
+- コンテナ内で生成される `debug/`, `cache/`, `telemetry/` 等も `.container/.claude/` に残る
+- `.container/` は `.gitignore` 済み
+- ホスト `~/.claude` を汚さない代わりに、認証情報やセッション等は `.container/.claude/` に手動で配置する必要がある
 
 ## 他のエージェント設定
 
-| Path | Mode |
-|---|---|
-| `~/.codex` | rw |
-| `~/.gemini` | rw |
-| `~/.config/gh` | rw |
-| `~/.config/github-copilot` | rw |
-| `~/.gitconfig` | ro |
-| `/var/run/docker.sock` | rw |
+| ホスト側 | コンテナ側 | Mode |
+|---|---|---|
+| `.container/.codex` | `/home/agent/.codex` | rw |
+| `.container/.gemini` | `/home/agent/.gemini` | rw |
+| `.container/.config/gh` | `/home/agent/.config/gh` | rw |
+| `.container/.config/github-copilot` | `/home/agent/.config/github-copilot` | rw |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw |
 
 ## Git認証
 
@@ -152,8 +137,8 @@ docker compose run --rm hangouts claude
 ```
 
 - **ワークスペース**: bind mountでホスト側コードを直接編集
-- **選択的マウント**: 必要なファイル/ディレクトリだけを個別にbind mount
-- **使い捨て実行**: `--rm` でマウントされないデータ（debug, cache, telemetry等）はコンテナ破棄で消える
-- **二段階 entrypoint**: root フェーズ（symlink作成、skills copy）→ `gosu` で agent ユーザーに降格
+- **ステージングマウント**: `.container/` を各エージェント設定の bind mount 元として使用
+- **使い捨て実行**: `--rm` でコンテナ破棄。`.container/` 以外のデータは消える
+- **権限降格**: root で起動 → `gosu` で即座に agent ユーザーに降格
 - **Git認証**: `GITHUB_TOKEN` + `gh auth setup-git` でHTTPS認証
 - **Docker in Docker**: `/var/run/docker.sock` を常時マウント
