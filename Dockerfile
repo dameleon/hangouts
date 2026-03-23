@@ -45,29 +45,12 @@ USER agent
 ENV PATH=$PATH:/home/agent/.local/bin
 ENV TERM=xterm-256color
 
-# .claude ディレクトリ構造を事前作成（agent 所有）
-# bind mount はこの上に載る。マウントされないディレクトリは ephemeral として残る
-RUN mkdir -p /home/agent/.claude \
-             /home/agent/.claude/projects \
-             /home/agent/.claude/sessions \
-             /home/agent/.claude/tasks \
-             /home/agent/.claude/plans \
-             /home/agent/.claude/todos \
-             /home/agent/.claude/skills \
-             /home/agent/.claude/plugins \
-             /home/agent/.agents \
-             /home/agent/.config \
+RUN mkdir -p /home/agent/.config \
              /home/agent/.local/share/keyrings
-
-# ファイルマウントターゲット（Docker がディレクトリとして作成するのを防ぐ）
-RUN touch /home/agent/.claude/.credentials.json \
-          /home/agent/.claude/settings.json \
-          /home/agent/.claude/history.jsonl \
-          /home/agent/.claude.json
 
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# entrypoint は root で開始（HOST_HOME symlink + skills copy 後に gosu で agent に降格）
+# entrypoint は root で開始（gosu で agent に降格）
 USER root
 
 WORKDIR /workspace

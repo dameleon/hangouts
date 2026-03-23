@@ -5,3 +5,4 @@
 tmp/
 *.log
 .container/
+!.container/.claude.json

@@ -4,48 +4,24 @@ services:
     image: hangouts:latest
     stdin_open: true
     tty: true
-    working_dir: /workspace
+    working_dir: ${HOST_WORKSPACE_PATH:-/workspace}
     env_file:
       - .env
     environment:
       - GITHUB_TOKEN
-      - HOST_WORKSPACE_PATH=${HOST_WORKSPACE_PATH:-}
-      - HOST_HOME=${HOME}
     volumes:
-      # Workspace
-      - ${WORKSPACE:-./}:/workspace
-
-      # ── Claude Code: 認証・設定 (read-only) ──
-      - ${HOME}/.claude/.credentials.json:/home/agent/.claude/.credentials.json:ro
-      - ${HOME}/.claude/settings.json:/home/agent/.claude/settings.json:ro
-      - ./.container/claude.json:/home/agent/.claude.json:ro
-
-      # ── Claude Code: 共有状態 (read-write) ──
-      - ${HOME}/.claude/projects:/home/agent/.claude/projects
-      - ${HOME}/.claude/history.jsonl:/home/agent/.claude/history.jsonl
-      - ${HOME}/.claude/sessions:/home/agent/.claude/sessions
-      - ${HOME}/.claude/tasks:/home/agent/.claude/tasks
-      - ${HOME}/.claude/plans:/home/agent/.claude/plans
-      - ${HOME}/.claude/todos:/home/agent/.claude/todos
-
-      # ── Claude Code: スキル (staging → entrypoint でコピー) ──
-      - ${HOME}/.claude/skills:/home/agent/.claude/skills-host:ro
-      - ${HOME}/.agents:/home/agent/.agents:ro
-
-      # ── Claude Code: プラグイン (read-write, HOST_HOME symlink でパス解決) ──
-      - ${HOME}/.claude/plugins:/home/agent/.claude/plugins
-
-      # ── 他のエージェント (変更なし) ──
-      - ${HOME}/.codex:/home/agent/.codex
-      - ${HOME}/.gemini:/home/agent/.gemini
-      - ${HOME}/.config/gh:/home/agent/.config/gh
-      - ${HOME}/.config/github-copilot:/home/agent/.config/github-copilot
-
-      # git config (read-only)
-      - ${HOME}/.gitconfig:/home/agent/.gitconfig:ro
-
-      # Keyring / Docker socket
+      # Workspace（host と同じ絶対パスで mount）
+      - ${WORKSPACE:-./}:${HOST_WORKSPACE_PATH:-/workspace}
+      # Agent config（.container/ 配下を直接 mount）
+      - ./.container/.claude:/home/agent/.claude
+      - ./.container/.claude.json:/home/agent/.claude.json
+      - ./.container/.codex:/home/agent/.codex
+      - ./.container/.gemini:/home/agent/.gemini
+      - ./.container/.config/gh:/home/agent/.config/gh
+      - ./.container/.config/github-copilot:/home/agent/.config/github-copilot
+      # Keyring persistence
       - keyring:/home/agent/.local/share/keyrings
+      # Docker-in-Docker
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
