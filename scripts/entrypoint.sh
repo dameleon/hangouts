@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Host ~/.gitconfig is mounted read-only — create a writable copy for container use
+# Drop privileges to agent user if running as root
+if [ "$(id -u)" = "0" ]; then
+    exec gosu agent "$0" "$@"
+fi
+
 export GIT_CONFIG_GLOBAL=/home/agent/.gitconfig-local
-cp /home/agent/.gitconfig "$GIT_CONFIG_GLOBAL" 2>/dev/null || touch "$GIT_CONFIG_GLOBAL"
+touch "$GIT_CONFIG_GLOBAL"
 
 # Set global git hooks path (pre-push blocks direct push to protected branches)
-git config --file "$GIT_CONFIG_GLOBAL" core.hooksPath /usr/local/share/hangouts/hooks
+git config --file "$GIT_CONFIG_GLOBAL" core.hooksPath /opt/hangouts/hooks
 
 # Configure git to use GitHub CLI for HTTPS authentication
 # Host .git/config keeps SSH URLs for host-side SSH key auth;

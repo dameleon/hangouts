@@ -5,13 +5,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     curl \
-    jq \
+    wget \
     less \
     openssh-client \
     gnupg \
     dbus \
     gnome-keyring \
     libsecret-1-0 \
+    gosu \
+    # Dev tools for LLM agents \
+    jq \
+    bubblewrap \
+    ripgrep \
+    fd-find \
+    tree \
+    unzip \
+    zip \
+    make \
+    patch \
+    file \
+    procps \
+    iproute2 \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # gh CLI via official apt repository
@@ -25,9 +41,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && rm -rf /var/lib/apt/lists/*
 
 # Scripts
-ADD scripts/entrypoint.sh /usr/local/share/hangouts/scripts/entrypoint.sh
-# Git hooks (pre-push: block direct push to protected branches)
-ADD scripts/hooks/pre-push /usr/local/share/hangouts/hooks/pre-push
+ADD scripts/entrypoint.sh /opt/hangouts/entrypoint.sh
+ADD scripts/hooks/pre-push /opt/hangouts/hooks/pre-push
 
 # npm-based CLIs
 RUN npm install -g \
@@ -42,11 +57,13 @@ RUN useradd -m -s /bin/bash agent
 USER agent
 ENV PATH=$PATH:/home/agent/.local/bin
 ENV TERM=xterm-256color
-RUN mkdir -p /home/agent/.config /home/agent/.local/share/keyrings
+
+RUN mkdir -p /home/agent/.config \
+             /home/agent/.local/share/keyrings
 
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-WORKDIR /workspace
+USER root
 
-ENTRYPOINT ["/usr/local/share/hangouts/scripts/entrypoint.sh"]
+ENTRYPOINT ["/opt/hangouts/entrypoint.sh"]
 CMD ["bash"]

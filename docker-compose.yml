@@ -4,30 +4,24 @@ services:
     image: hangouts:latest
     stdin_open: true
     tty: true
-    working_dir: /workspace
+    working_dir: ${WORKSPACE:-/workspace}
     env_file:
       - .env
     environment:
       - GITHUB_TOKEN
     volumes:
-      # Workspace
-      - ${WORKSPACE:-./}:/workspace
-
-      # Agent configs (read-write)
-      - ${HOME}/.claude:/home/agent/.claude
-      - ${HOME}/.claude.json:/home/agent/.claude.json
-      - ${HOME}/.codex:/home/agent/.codex
-      - ${HOME}/.gemini:/home/agent/.gemini
-      - ${HOME}/.config/gh:/home/agent/.config/gh
-      - ${HOME}/.config/github-copilot:/home/agent/.config/github-copilot
-
-      # git config (read-only)
-      - ${HOME}/.gitconfig:/home/agent/.gitconfig:ro
-
-      # Keyring (credential storage for copilot etc.)
+      # Workspace（host と同じ絶対パスで mount）
+      - ${WORKSPACE:-./}:${WORKSPACE:-/workspace}
+      # Agent config（.container/ 配下を直接 mount）
+      - ./.container/.claude:/home/agent/.claude
+      - ./.container/.claude.json:/home/agent/.claude.json
+      - ./.container/.codex:/home/agent/.codex
+      - ./.container/.gemini:/home/agent/.gemini
+      - ./.container/.config/gh:/home/agent/.config/gh
+      - ./.container/.config/github-copilot:/home/agent/.config/github-copilot
+      # Keyring persistence
       - keyring:/home/agent/.local/share/keyrings
-
-      # Docker socket
+      # Docker-in-Docker
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:

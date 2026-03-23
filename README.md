@@ -61,6 +61,8 @@ make claude WORKSPACE=/path/to/your/project
 make claude WORKSPACE=/path/to/your/project
 ```
 
+> **注意**: `WORKSPACE` は絶対パスで指定すること。`docker compose` を直接使う場合も同様。
+
 ## YOLO Mode
 
 各agentはデフォルトで権限確認をスキップするフラグ付きで起動する:
@@ -72,26 +74,39 @@ make claude WORKSPACE=/path/to/your/project
 | Gemini | `--yolo` |
 | Copilot | `--yolo` |
 
-## Config Sync
+## Claude Code 同期方式
 
-ホスト側のエージェント設定をコンテナと双方向で共有する仕組み:
+ホストの `~/.claude` を直接マウントすると auto-update 競合やバージョン不整合でクラッシュするため、
+`.container/` ディレクトリをステージング領域として使い、ホスト `~/.claude` とは分離する。
 
-- 各エージェントの設定ディレクトリを **read-write bind mount** でマウント
-- コンテナ内での設定変更がホスト側に即反映
-- gitconfigは **read-only** でマウント
+### 仕組み
 
-### マウント対象
+1. `.container/.claude/` にエージェント設定を配置（ホスト `~/.claude` からコピーまたは手動構成）
+2. `docker-compose.yml` で `.container/.claude` → `/home/agent/.claude` に丸ごと bind mount
+3. コンテナ内の変更は `.container/.claude/` に反映されるが、ホスト `~/.claude` には影響しない
 
-| Path | Mode |
-|---|---|
-| `~/.claude` | rw |
-| `~/.claude.json` | rw |
-| `~/.codex` | rw |
-| `~/.gemini` | rw |
-| `~/.config/gh` | rw |
-| `~/.config/github-copilot` | rw |
-| `~/.gitconfig` | ro |
-| `/var/run/docker.sock` | rw |
+### マウント一覧（Claude Code）
+
+| ホスト側 | コンテナ側 | 用途 |
+|---|---|---|
+| `.container/.claude/` | `/home/agent/.claude` | Claude Code 設定・データ全般 |
+| `.container/.claude.json` | `/home/agent/.claude.json` | トップレベル設定（autoUpdates=false 等） |
+
+### 注意事項
+
+- コンテナ内で生成される `debug/`, `cache/`, `telemetry/` 等も `.container/.claude/` に残る
+- `.container/` は `.gitignore` 済み
+- ホスト `~/.claude` を汚さない代わりに、認証情報やセッション等は `.container/.claude/` に手動で配置する必要がある
+
+## 他のエージェント設定
+
+| ホスト側 | コンテナ側 | Mode |
+|---|---|---|
+| `.container/.codex` | `/home/agent/.codex` | rw |
+| `.container/.gemini` | `/home/agent/.gemini` | rw |
+| `.container/.config/gh` | `/home/agent/.config/gh` | rw |
+| `.container/.config/github-copilot` | `/home/agent/.config/github-copilot` | rw |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw |
 
 ## Git認証
 
@@ -118,16 +133,12 @@ git push origin feature/x   # → 許可
 ## Architecture
 
 ```
-docker run --rm -it \
-  -v ~/.claude:/root/.claude \
-  -v "${PWD}:/workspace" \
-  -w /workspace \
-  -e GITHUB_TOKEN \
-  hangouts claude
+docker compose run --rm hangouts claude
 ```
 
 - **ワークスペース**: bind mountでホスト側コードを直接編集
-- **設定共有**: RW bind mountでホストとコンテナ間で双方向同期
-- **使い捨て実行**: `--rm` でワークスペース・設定外の変更はコンテナ破棄で消える
+- **ステージングマウント**: `.container/` を各エージェント設定の bind mount 元として使用
+- **使い捨て実行**: `--rm` でコンテナ破棄。`.container/` 以外のデータは消える
+- **権限降格**: root で起動 → `gosu` で即座に agent ユーザーに降格
 - **Git認証**: `GITHUB_TOKEN` + `gh auth setup-git` でHTTPS認証
 - **Docker in Docker**: `/var/run/docker.sock` を常時マウント
